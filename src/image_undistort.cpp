@@ -96,7 +96,7 @@ ImageUndistort::ImageUndistort(const ros::NodeHandle& nh,
     ROS_ERROR("Input frame cannot be blank, setting to default");
     input_frame_ = kDefaultInputFrame;
   }
-
+  ROS_INFO("start to set up subscribers");
   // setup subscribers
   std::string input_camera_namespace;
   if (input_camera_info_from_ros_params) {
@@ -114,7 +114,7 @@ ImageUndistort::ImageUndistort(const ros::NodeHandle& nh,
     camera_sub_ = it_.subscribeCamera("input/image", queue_size_,
                                       &ImageUndistort::cameraCallback, this);
   }
-
+  ROS_INFO("setting up publishers");
   // setup publishers
   if (process_image_) {
     bool pub_camera_info_output = true;
@@ -128,9 +128,14 @@ ImageUndistort::ImageUndistort(const ros::NodeHandle& nh,
         ros::shutdown();
         exit(EXIT_FAILURE);
       }
+      else
+      {
+        ROS_INFO("setting up output param finished");
+      }
     } else if (output_camera_info_source_ == OutputInfoSource::MATCH_INPUT) {
       camera_parameters_pair_ptr_->setOutputFromInput(scale_);
     } else if (output_camera_info_source_ == OutputInfoSource::AUTO_GENERATED) {
+      ROS_INFO("setting optimal output camera params");
       camera_parameters_pair_ptr_->setOptimalOutputCameraParameters(scale_);
     } else {
       camera_info_sub_ =

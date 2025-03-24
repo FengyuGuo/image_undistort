@@ -7,9 +7,10 @@ BaseCameraParameters::BaseCameraParameters(const ros::NodeHandle& nh,
                                            const std::string& camera_namespace,
                                            const bool invert_T) {
   ROS_INFO("Loading camera parameters");
-
+  ROS_INFO("camera namespace: %s", camera_namespace.c_str());
   XmlRpc::XmlRpcValue K_in;
   bool K_loaded = false;
+  
   if (nh.getParam(camera_namespace + "/K", K_in)) {
     xmlRpcToMatrix(K_in, &K_);
     K_loaded = true;
@@ -82,6 +83,7 @@ BaseCameraParameters::BaseCameraParameters(const ros::NodeHandle& nh,
              .finished() *
          T_;
   }
+  ROS_INFO("setting up base camera parameters finished");
 }
 
 BaseCameraParameters::BaseCameraParameters(
@@ -154,16 +156,19 @@ InputCameraParameters::InputCameraParameters(
     const ros::NodeHandle& nh, const std::string& camera_namespace,
     const bool invert_T)
     : BaseCameraParameters(nh, camera_namespace, invert_T) {
+  ROS_INFO("setting up input camera model");
   std::string distortion_model_in, camera_model_in;
   if (!nh.getParam(camera_namespace + "/distortion_model",
                    distortion_model_in) ||
       !nh.getParam(camera_namespace + "/camera_model", camera_model_in)) {
+    ROS_INFO("input camera model: %s", camera_model_in.c_str());
     ROS_WARN(
         "No camera and/or distortion model given, assuming pinhole-radtan");
     distortion_model_ = DistortionModel::RADTAN;
   } else {
     distortion_model_ =
         stringToDistortion(distortion_model_in, camera_model_in);
+        ROS_INFO("input camera model: %s", camera_model_in.c_str());
   }
 
   std::vector<double> intrinsics_in;
@@ -304,6 +309,7 @@ CameraParametersPair::CameraParametersPair(
 bool CameraParametersPair::setCameraParameters(
     const ros::NodeHandle& nh, const std::string& camera_namespace,
     const CameraIO& io, const bool invert_T) {
+  ROS_INFO("set input and output camera");
   try {
     if (io == CameraIO::INPUT) {
       input_ptr_ = std::make_shared<InputCameraParameters>(nh, camera_namespace,
@@ -383,6 +389,7 @@ bool CameraParametersPair::setOptimalOutputCameraParameters(
         "parameters have been given");
     return false;
   }
+  ROS_INFO("compute optimal output camera params");
   cv::Size resolution_estimate(
       std::ceil(input_ptr_->resolution().width * scale),
       std::ceil(input_ptr_->resolution().height * scale));
@@ -402,7 +409,7 @@ bool CameraParametersPair::setOptimalOutputCameraParameters(
   } else {
     D = std::vector<double>(7, 0);
   }
-
+  ROS_INFO_STREAM("input K:\n" << input_ptr_->K() << ", input R:\n" << input_ptr_->R() << "\n");
   // Find the resolution of the output image
   // Thanks to weird corner cases this is way more complex then it should be.
   // The general case is even more of a nightmare, so we constrain the problem
@@ -411,6 +418,8 @@ bool CameraParametersPair::setOptimalOutputCameraParameters(
   // image size assuming a linear relationship between warping and size at each
   // step
   for (size_t i = 0; i < kFocalLengthEstimationAttempts; ++i) {
+    ROS_INFO("iteration %lu", i);
+    ROS_INFO_STREAM("resolution estimate: " << resolution_estimate);
     // get list of edge points to check
     std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>>
         pixel_locations;
@@ -462,12 +471,14 @@ bool CameraParametersPair::setOptimalOutputCameraParameters(
       P(1, 2) = static_cast<double>(resolution_estimate.height) / 2.0;
     }
   }
+  ROS_INFO("iteration finished");
 
   // create final camera parameters
   Eigen::Matrix3d K = P.topLeftCorner<3, 3>();
   Eigen::Matrix4d T = Eigen::Matrix4d::Identity();
   T.topRightCorner<3, 1>() = input_ptr_->p();
 
+  ROS_INFO("setting optimal output camera params finished");
   return setOutputCameraParameters(resolution_estimate, T, K);
 }
 

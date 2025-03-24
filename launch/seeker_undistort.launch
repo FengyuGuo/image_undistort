@@ -1,0 +1,33 @@
+<launch>
+
+<arg name="input_camera_name" default="/fisheye/bright" />
+<arg name="scale" default="0.3" />
+<arg name="calib_path" default="/home/guo/seeker_ws/src/seeker1/config/seeker_omni_depth/kalibr_cam_chain.yaml"/>
+  <node name="image_undistort_node" pkg="image_undistort" type="image_undistort_node" output="screen">
+    <param name="rosconsole_logger_level" value="VERBOSE"/>
+    <param name="input_camera_namespace" value="cam2"/>      
+    <param name="input_camera_info_from_ros_params" value = "true"/>    
+    <param name="scale" value="$(arg scale)"/>
+    <param name="output_camera_info_source" value="match_input"/>
+    <rosparam file="$(arg calib_path)"/>
+    <remap from="input/image" to="$(arg input_camera_name)/image_raw/"/>
+  </node>
+
+  <node name="repub1" pkg="image_transport" type="republish" output="screen" args="compressed in:=/fisheye/bright/image_raw raw out:=/fisheye/bright/image_raw">
+    <!-- <remap from="in" to="/fisheye/left/image_raw" />
+    <remap from="out" to="/fisheye/left/image_raw" /> -->
+  </node>
+  <!-- <node name="repub2" pkg="image_transport" type="republish" output="screen" args="compressed">
+    <remap from="in" to="/fisheye/right/image_raw" />
+    <remap from="out" to="/fisheye/right/image_raw" />
+  </node>
+  <node name="repub3" pkg="image_transport" type="republish" output="screen" args="compressed">
+    <remap from="in" to="/fisheye/bleft/image_raw" />
+    <remap from="out" to="/fisheye/bleft/image_raw" />
+  </node>
+  <node name="repub4" pkg="image_transport" type="republish" output="screen" args="compressed">
+    <remap from="in" to="/fisheye/bright/image_raw" />
+    <remap from="out" to="/fisheye/bright/image_raw" />
+  </node> -->
+</launch>
+
