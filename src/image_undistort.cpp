@@ -122,6 +122,7 @@ ImageUndistort::ImageUndistort(const ros::NodeHandle& nh,
       std::string output_camera_namespace;
       nh_private_.param("output_camera_namespace", output_camera_namespace,
                         kDefaultOutputCameraNamespace);
+      ROS_INFO("output camera namespace: %s", output_camera_namespace.c_str());
       if (!camera_parameters_pair_ptr_->setCameraParameters(
               nh_private_, output_camera_namespace, CameraIO::OUTPUT)) {
         ROS_FATAL("Loading of output camera parameters failed, exiting");

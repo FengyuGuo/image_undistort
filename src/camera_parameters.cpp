@@ -52,10 +52,12 @@ BaseCameraParameters::BaseCameraParameters(const ros::NodeHandle& nh,
   if (nh.getParam(camera_namespace + "/T_cn_cnm1", T_in) ||
       nh.getParam(camera_namespace + "/T", T_in)) {
     xmlRpcToMatrix(T_in, &T_);
+    
     T_loaded = true;
   } else {
     T_ = Eigen::Matrix4d::Identity();
   }
+  ROS_INFO_STREAM("transform matrix: \n" << T_ << "\n");
 
   if (invert_T) {
     T_ = T_.inverse();
